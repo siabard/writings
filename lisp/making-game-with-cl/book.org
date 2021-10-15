@@ -85,3 +85,96 @@
 해당하며, 초당 60 프레임에 해당한다.
 
 즉 해당 값의 1/1000_000 만큼이 변경을 위한 증분이 된다.
+
+* 리소스를 저장하기
+
+  리소스는 먼저 패키지를 등록하는 것으로 시작한다.
+
+#+BEGIN_SRC lisp
+
+(gk:register-resource-package :keyword
+                              (asdf:system-relative-pathname :leda "assets/"))
+
+#+END_SRC
+
+여기서 눈여겨 볼 것은 =:keyword= 라고 설정한 부분이다. 이것은 일종의
+lisp 안에서의 패키지 명으로 어플리케이션 패키지와 구분하기 위해서 사용한다.
+
+위와 같이 했다면 이제 앞으로 =define-*= 으로 정의되는 이미지, 사운드,
+폰트에 상대경로를 지정할 수 있다. 예를 들어 폰트를 지정해보자.
+
+#+BEGIN_SRC lisp
+
+(gk:define-font :undotum "fonts/undotum.ttf")
+
+(defparameter *undotum-32* nil)
+
+
+#+END_SRC
+
+=define-font= 로 =:undotum= 이라는 리소스 이름으로 폰트를
+지정했다. 위에서 리소스의 최상위 경로를 =assets/= 로 지정했고, 폰트
+설정에서 상대 경로를 사용했으므로 전체 경로는
+=프로젝트/assets/fonts/undotum.ttf= 가 된다.
+
+폰트는 =make-font= 를 통해서 크기 등을 지정하여 사용할 수 있는데
+문제가 있다. 이 함수는 =defmethod= 로 정의되는 정의내에서만 쓸 수 있다는 점이다.
+
+즉 외부에서 바로 =(gk:make-font ':undotum 32)= 식으로 쓰면 바로
+GENERIC 관련 오류가 난다.
+
+#+BEGIN_SRC
+
+There is no applicable method for the generic function
+  #<STANDARD-GENERIC-FUNCTION (SB-PCL::SLOT-ACCESSOR :GLOBAL
+                               TRIVIAL-GAMEKIT::RESOURCE-REGISTRY
+                               SB-PCL::READER) (1)>
+when called with arguments
+  (NIL).
+   [Condition of type SB-PCL::NO-APPLICABLE-METHOD-ERROR]
+See also:
+  Common Lisp Hyperspec, 7.6.6 [:section]
+
+#+END_SRC
+
+바로 이런 점때문에 초기화 루틴을 짠다.
+
+** 초기화 루틴
+
+초기화 루틴은 =post-initialize= 함수를 통해 구성한다.
+
+#+BEGIN_SRC lisp
+
+(defmethod gamekit:post-initialize ((app leda-game))
+  (setf *undotum-32*  (gk:make-font ':undotum 32)))
+
+#+END_SRC
+
+똑같은 루틴을 사용해지만, =defmethod= 안에서 사용했기 때문에 GENERIC이
+정상적으로 동작했고, 덤으로 해당하는 객체를 전역변수에 등록도 시켰다.
+
+이제 랜더링 구문을 수정해서 텍스트를 출력할 수 있다.
+
+#+BEGIN_SRC lisp
+
+
+;;; render game
+(defmethod gk:draw ((app leda-game))
+  (gk:draw-rect *origin* *canvas-width* *canvas-height* :fill-paint *black*)
+  (gk:draw-text (write-to-string  *delta-time*) (gk:vec2 300 400) :fill-color *white*)
+  (gk:draw-text (write-to-string  *last-time*) (gk:vec2 300 500) :fill-color *white*)
+  (gk:draw-text "LEDA 게임" (gk:vec2 400 300) :fill-color *white* :font *undotum-32*)
+  )
+
+
+#+END_SRC
+
+이제 화면에 한글도 잘 출력되는 것을 볼 수 있을 것이다.
+
+* 맵을 탐험하기
+
+** Map 만들기
+
+** TileAtlas 만들기
+   
+** Tiled 이용하기
