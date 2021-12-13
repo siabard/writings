@@ -84,13 +84,13 @@ open Sdl
 open Sdlevent
 
 
-let rec event_loop () =
+let event_loop () =
   match Event.poll_event () with
   | None -> ()
   | Some Quit _ ->
     Sdl.quit();
     exit 0
-  | _ -> event_loop ()
+  | _ ->  ()
       
 
 let main () =
@@ -120,6 +120,72 @@ let () = main ()
 
 ### 이벤트 핸들러
 
+이벤트 핸들러는 `Sdl_event.poll_event`를 통해 들어온 이벤트에 따라
+어떤 일을 할 것인지를 정한다. 위의 예제에서 이벤트 핸들러를 살펴보자.
+
+```
+let event_loop () =
+  match Event.poll_event () with
+  | None -> ()
+  | Some Quit _ ->
+    Sdl.quit();
+    exit 0
+  | _ ->  ()
+      
+```
+
+여기에서 이벤트 핸들러가 확인하는 이벤트는 `Some Quit _` 뿐이다. 이
+이벤트가 들어오면 프로그램을 종료하며, `Sdl`을 끝낸다.
+
+이벤트 핸들러는 이 뿐 아니라, 키보드, 마우스, 햅틱 등도 처리한다.
+
 ### Surface 만들기
 
+`Surface`는 렌더링이 일어나는 부분이다. 
+
+```
+  let surf = Sdlwindow.get_surface window in
+  let color = 0x00BB00_l in
+  let rect = Sdlrect.make4 ~x:0 ~y:0 ~w:width ~h:height in
+  Sdlsurface.fill_rect ~dst:surf ~rect ~color;
+  Sdlwindow.update_surface window;
+```
+
+생성된 `Window`에서 `get_surface`를 통해 Surface를 얻는데, 여기에 직접
+그림을 그릴 수 있다. 사실 이 방법 보다는 Renderer를 생성하여 렌더링을
+하는 편이 훨씬 더 효과적이다. 이 방법은 나중에 알아본다.
+
 ### 메인 루프
+
+OCaml에서 루프를 하는 방법은 여러 가지가 있지만 여기에서는 Tail Call
+Recursion (꼬리 재귀 호출)을 이용했다.
+
+```
+let main () =
+  let width, height = (640, 480) in
+  Sdl.init [`VIDEO];
+  let window = Sdlwindow.create2
+      ~x:`undefined ~y:`undefined
+      ~width ~height
+      ~title:"SDL2 tutorial"
+      ~flags:[Window.Resizable]
+  in
+  let surf = Sdlwindow.get_surface window in
+  let color = 0x00BB00_l in
+  let rect = Sdlrect.make4 ~x:0 ~y:0 ~w:width ~h:height in
+  Sdlsurface.fill_rect ~dst:surf ~rect ~color;
+  Sdlwindow.update_surface window;
+  let rec main_loop () =
+    event_loop ();
+    Sdlwindow.update_surface window;
+    main_loop ()
+  in
+  main_loop ()
+```
+
+재귀 호출은 `main_loop`를 통해서 일어나며 이벤트 핸들러, Window
+Surface의 update 등을 처리한다. 
+
+## 정리
+
+이렇게 OCaml에서 SDL을 이용하여 간단한 화면 그리기 예제를 만들었다. 다음에는 Renderer와 Texture를 통해 이미지를 노출하는 방법을 알아본다.
