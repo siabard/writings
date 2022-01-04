@@ -4,7 +4,8 @@
 2. SDL2 모듈 설치하기
 3. 화면 생성하기
 4. Sprite 출력하기
-5. Map 만들기
+5. TextureMap 만들기
+6. Map 만들기
 6. 캐릭터 만들기
 7. 움직이게 하기
 8. Collision Detection
