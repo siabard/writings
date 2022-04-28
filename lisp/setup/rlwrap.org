@@ -1,0 +1,9 @@
+* RLWRAP 설치
+
+=rlwrap= 은 repl에서 backspace 등이 안되는 문제를 해결해줄 수 있다.
+
+아래의 내용을 =.zshrc= 에 추가한다.
+
+#+BEGIN_SRC sh
+  alias sbcl=`rlwrap $(which sbcl)`
+#+END_SRC
