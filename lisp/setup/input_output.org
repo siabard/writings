@@ -56,3 +56,19 @@ NIL
 #+END_SRC
 
 이다.
+
+경로 정보를 더 섬세하게 작성하려면 =make-pathname= 함수를
+사용한다. 아래 예에서는 =testdata/test.dat= 를 지정한다.
+
+#+BEGIN_SRC lisp
+
+
+  (let ((a-path-name
+          (make-pathname :directory "testdata"
+                         :name "test.dat")))
+    (with-open-file
+      (input-stream a-path-name :direction :input)
+      ...
+      ))
+
+#+END_SRC
