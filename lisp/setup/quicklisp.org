@@ -1,0 +1,34 @@
+* 초기 설치하기
+
+Quicklisp의 설치는 매우 쉽다.
+
+#+BEGIN_SRC sh
+
+  curl -O https://beta.quicklisp.org/quicklisp.lisp
+
+  sbcl --load quicklisp.lisp
+
+#+END_SRC
+
+위와 같이 설치한 후 lisp 환경에서 아래의 명령을 넣어주면 된다.
+
+#+BEGIN_SRC lisp
+
+  (quicklisp-quickstart:install)
+
+  (ql:add-to-init-file)
+  
+#+END_SRC
+
+해당 과정이 끝나면 기본적인 준비가 끝난다. 이제 Lisp 프로그램을 종료하고 다시 시작하면 완료된다.
+
+* Emacs 에 설정하기
+
+Emacs에 간단하게 다음과 같치할 수 있다.
+
+#+BEGIN_SRC emacs-lisp
+
+  (load (expand-file-name "~/quicklisp/slime-helper.el"))
+
+#+END_SRC
+
