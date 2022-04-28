@@ -1,0 +1,32 @@
+* Package System
+
+기본적으로 Common Lisp 은 =:cl= 또는 =:common-list-user= 라는
+패키지에서 시작한다. 해당 내용은 =*package*= 라는 전역변수에서 확인이
+가능하다.
+
+=:my-package= 라는 패키지를 만들고 두 함수 =foo1= 과 =foo2= 가 있다면
+명시적인 접근법은 =my-package:foo1=, =my-package:foo2= 가 된다. 이때
+=:export= 를 통해 명시적으로 외부에 노출시켜야 접근이 가능하다.
+
+#+BEGIN_SRC lisp
+
+  (defpackage "my-package"
+    (:use :cl)
+    (:nicknames "P1")
+    (:export :FOO2))
+
+  (in-package "my-package")
+
+  (defun foo1 () "foo1")
+
+  (defun foo2 () "foo2")
+
+  (in-package :cl)
+
+  ;; 이 함수는 이용 가능하다
+  (p1:foo2)
+
+  ;; 아래는 오류가 난다.
+  (p1:foo1)
+  
+#+END_SRC

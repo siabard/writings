@@ -1,0 +1,70 @@
+* Loop 매크로
+
+Lisp에는 반복문을 처리하기위한 다양한 매크로가 존재한다.
+
+- =dolist= : 리스트를 처리하는 가장 간단한 형태
+- =dotimes= : 정수 값을 반복변수로 하는 간단한 반복
+- =do= : 가장 일반적인 반복 매크로
+- =loop= : 복잡한 조건을 사용할 수 있게 도와주는 반복 매크로
+
+** dolist
+
+=dolist= 매크로의 기본형과 사용 방법은 다음과 같다.
+
+#+BEGIN_SRC lisp
+
+  (dolist (a-variable a-list [optional-result-value])  ...body... )
+
+  ;; 실제 사용 예: 결과값으로 'DONE이 출력
+  (dolist (a '(1 2) 'done) (print a))
+#+END_SRC
+
+** dotimes
+
+=dotimes= 는 정수 반복 첨자를 사용하는 반복문에 쓰인다.
+
+#+BEGIN_SRC lisp
+
+  (dotimes
+      (an-index-variable max-index-plus-one [optional-result-value])
+    ...body... )
+
+  ;; 사용 예 0, 1, 2 까지 출력하고 "done"까지 출력된다.
+  (dotimes (i 3 "done") (print i))
+  
+#+END_SRC
+
+
+** do
+
+가장 범용적인 매크로이지만, 복잡하기도 하다.
+
+#+BEGIN_SRC lisp
+
+  (do ((variable-1 variable-1-init-value variable-1-update-expression)
+       (variable-2 variable-2-init-value variable-2-update-expression)
+       ...
+       (variable-N variable-N-init-value variable-N-update-expression))
+      (loop-termination test loop-return-value)
+    optional-variable-declarations
+    expressions-to-be-excuted-inside-the-loop)
+
+  ;; 사용 예
+  (do ((i 0 (1+ i)))
+      (( > i 3) "done")
+    (print i))
+  
+#+END_SRC
+
+** Loop special form
+
+=loop= 는 상당히 복잡하고, 다양한 표현식을 제공한다.
+
+#+BEGIN_SRC lisp
+
+  ;; testdata 벡터의 개개값을 td에 바인딩하여 반복문을 수행한다.
+  (loop for td across testdata
+        do
+           (print td))
+
+#+END_SRC

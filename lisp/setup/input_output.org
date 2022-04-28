@@ -1,0 +1,58 @@
+* Input and Output
+
+Lisp의 모든 입출력은 Stream을 통해 이루어진다. Stream은 터미널, 파일,
+소켓, 문자열에 대한 출력 함수의 공통 라이브러리를 지원하는 추상화이다.
+
+기본적으로 특정 스트림을 지정하지않으면 기본 입력은 =*standard-input*=
+이며, 출력은 =*standard-output*= 이다. 이들 기본 스트림은 List
+리스너에 연결되어있다.
+
+** 입력기능
+
+=read= 함수는 Lisp 표현식 하나를 읽어들일 때 수행된다. 개행 문자는
+무시하고 표현식을 하나씩 들어들이는데, 아래 예제를 통해 확인이 가능하다.
+
+예를 들어 =test.dat= 라는 파일에 다음과 같은 내용을 넣어두자.
+
+#+BEGIN_SRC
+
+1 2 3
+4 "the cat bit the rat"
+        read with-open-file
+
+#+END_SRC
+
+이제 아래와 같이 프로그램을 작성한다.
+
+#+BEGIN_SRC lisp
+
+  (defun read-test-1 ()
+    (with-open-file
+      (input-stream "test.dat" :direction :input)
+      (dotimes (i 1000)
+        (let ((x (read input-stream nil nil)))
+          (if (null x) (return))
+          (format t "next expression in file: ~S~%" x)))))
+
+#+END_SRC
+
+SBCL에서 현재 경로를 옮기려면 =(sb-posix:chdir "/path/to/work/dir")=
+이라고 하면 된다. 현재 경로를 확인하는 방법은 =(sb-posix:getcwd)= 라고
+한다.
+
+실행결과는
+
+#+BEGIN_SRC
+
+next expression in file: 1
+next expression in file: 2
+next expression in file: 3
+next expression in file: 4
+next expression in file: "the cat bit the rat"
+next expression in file: READ
+next expression in file: WITH-OPEN-FILE
+NIL
+
+#+END_SRC
+
+이다.
