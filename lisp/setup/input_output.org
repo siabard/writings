@@ -72,3 +72,85 @@ NIL
       ))
 
 #+END_SRC
+
+
+** read-line
+
+=readline= 은 한 문장씩 읽어들이는 함수이다.
+
+#+BEGIN_SRC lisp
+
+  (defun readline-test ()
+    "read a maximum of 1000 expressions from the file 'test.dat'"
+    (with-open-file
+      (input-stream "test.dat" :direction :input)
+      (dotimes (i 1000)
+        (let ((x (read-line input-stream nil nil)))
+          (if (null x) (return))
+          (format t "next line in file: ~S~%" x)))))
+
+#+END_SRC
+
+** 문자열을 Stream 으로 사용하기
+
+=with-input-from-string= 매크로를 이용하면 문자열을 스트림으로 이용할 수 있다.
+
+#+BEGIN_SRC lisp
+
+  (defun read-from-string-test ()
+    (let ((str "1 2 \"My Parrot is named Brady.\" (11 22)"))
+      (with-input-from-string
+        (input-stream str)
+        (dotimes (i 1000)
+          (let ((x (read input-stream nil nil)))
+            (if (null x) (return))
+            (format t "next expression in string: ~S~%"))))))
+
+#+END_SRC
+
+
+* Printing
+
+지금까지는 =format= 함수에 첫번째 파라미터를 =t= 로 하여
+사용했다. 원래 이 자리는 스트림 값이 오는 곳으로 =t= 는
+=*standard-output*= 을 의미한다. 해당 값 대신 =nil= 을 넣으면 문자열로
+반환하라는 의미가 된다.
+
+#+BEGIN_SRC lisp
+
+  (let ((l1 '(1 2))
+        (x 3.14159))
+    (format nil ("~A~A" l1 x)))
+
+#+END_SRC
+
+=print= 와 =princ= 는 인자를 받는 면에서는 같지만, =print= 는 리습
+객체를 반환하고, =princ= 는 사람에게 더 맞춰진 결과를 준다는 면에서
+차이가 있다.
+
+#+BEGIN_SRC lisp
+
+  ;; 출력되는 값은 "testing" 이다.
+  (print "testing")
+
+  ;; 출력되는 값은 testing 이다
+  (princ "testing")
+  
+#+END_SRC
+
+파일에 출력하기위해서는 =with-open-file= 매트로를 이용한다.
+
+#+BEGIN_SRC lisp
+
+  (with-open-file
+    (out-stream "test1.dat"
+                :direction :output
+                :if-exists :supersede)
+    (print "the cat ran down the road" out-stream)
+    (format out-stream "1 + 2 is: ~A~%" (+ 1 2))
+    (princ "Stocking!!" out-stream)
+    (terpri out-stream))
+  
+#+END_SRC
+
+=princ= 는 개행문자를 출력하지않기 때문에 =terpri= 와 자주 사용된다.
