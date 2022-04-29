@@ -1,0 +1,30 @@
+* Plotting Data
+
+[[http://xach.com/lisp/vecto/][Vecto]] 라이브러리를 통해 파일로 데이터를 시각화하여 출력할 수 있다. 
+
+** 라이브러리 생성하기
+
+vector 라이브러리에 대해 몇가지 래퍼 함수를 정의한다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload :vecto)
+  (defpackage #:plotlib
+    (:use #:cl #:vecto))
+
+  (in-package #:plotlib)
+
+  (defun plot-fill-rect (x y width height gscale)
+    (set-rgb-fill gscale gscale gscale)
+    (rectangle x y width height)
+    (fill-path))
+
+  (defun plot-frame-rect (x y width height)
+    (set-line-width 1)
+    (set-rgb-fill 1 1 1)
+    (rectangle x y width height)
+    (stroke))
+
+  
+
+#+END_SRC
