@@ -25,6 +25,33 @@ vector 라이브러리에 대해 몇가지 래퍼 함수를 정의한다.
     (rectangle x y width height)
     (stroke))
 
-  
+  (defun plot-line (x1 y1 x2 y2)
+    (set-line-width 1)
+    (set-rgb-fill 0 0 0)
+    (move-to x1 y1)
+    (line-to x2 y2)
+    (stroke))
+
+  (defun plot-string (x y str)
+    (let ((font (get-font "OpenSans-Regular.ttf")))
+      (set-font font 15)
+      (set-rgb-fill 0 0 0)
+      (draw-string x y str)))
+
+  (defun plot-string-bold (x y str)
+    (let ((font (get-font "OpenSans-Bold.ttf")))
+      (set-font font 15)
+      (set-rgb-fill 0 0 0)
+      (draw-string x y str)))
+
+  (defun test-plotlib (file)
+    (with-canvas (:width 90 :height 90)
+      (plot-fill-rect 5 10 15 30 0.2)
+      (plot-fill-rect 25 30 30 7. 0.7)
+      (plot-frame-rect 10 50 30 7)
+      (plot-line 90 5 10 5)
+      (plot-string 10 65 "test 1 2 3")
+      (plot-string-bold 10 78 "Hello")
+      (save-png file)))
 
 #+END_SRC
