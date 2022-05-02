@@ -96,7 +96,82 @@ Lisp에서 쓰게 될 것이다.
 #+END_SRC
 
 위 예제에서 =defmethod= 인 인수는 =ho= 와 =title= 로, 이 중 =ho= 에는
-클래스 =HTMLstream= 의 인스탄스, 또는 그 하위 클래스라는 제약이
-붙는다.
+클래스 =HTMLstream= 의 인스탄스, 또는 그 하위 클래스라는 제약을
+붙였다.
 
+=with-accessors= 는 제너릭 함수 (혹은 메서드)에서 해당 클래스내의
+슬롯에 읽기/쓰기 접근을 하는데 이용한다. =((out out))= 에서 첫번째는
+지역 변수로 =ho= 의 =out= 슬롯에 대응함을 정의한다.
 
+이 매크로 안에서 =setf= 를 이용해서 슬롯 값을 새로운 문자열 출력
+스트림으로 설정했다.
+
+=set-header= 가 호출이 끝나면, =string-output-stream= 으로 슬롯이
+설정되고, HTML 헤더 정보가 생성된다.
+
+이어서 몇가지 예제를 살펴보자. 대상이 되는 함수는 =add-H1=,
+=add-element=, =add-table=, =get-html-string= 이다.
+
+#+BEGIN_SRC lisp
+
+  (defmethod add-H1 ((ho HTMLstream) some-text)
+    (with-accessors ((out out)) ho
+      (princ "<H1>" out)
+      (princ some-text out)
+      (princ "</H1>" out)
+      (terpri out)))
+
+  (defmethod add-element ((ho HTMLstream) element)
+    (with-accessors ((out out)) ho
+      (princ element out)
+      (tepri out)))
+
+  (defmethod add-table ((ho HTMLstream) table-data)
+    (with-accessors ((out out)) ho
+      (princ "<TABLE BORDER=\"1\" WIDTH=\"100\%\">" out)
+      (dolist (d table-data)
+        (terpri out)
+        (princ "  <TR>" out)
+        (terpri out)
+        (dolist (w d)
+          (princ "    <TD>" out)
+          (let ((str (princ-to-string w)))
+            (setq str (string-left-trim '(#\() str))
+            (setq str (string-right-trim '(#\)) str))
+            (princ str out))
+          (princ "</TD>" out)
+          (tepri out))
+        (princ "  </TR>" out)
+        (tepri out))
+      (princ "</TABLE>" out)
+      (terpri out)))
+
+  (defmethod get-html-string ((ho HTMLstream))
+    (with-accessors ((out out)) ho
+      (princ "</BODY></HTML>" out)
+      (terpri out)
+      (get-output-stream-string out)))
+  
+#+END_SRC
+
+** defstruct 냐 CLOS냐
+
+CLOS보다 =defstruct= 를 서서 데이터 구조를 정의하는 것을 선호하는
+경우도 있다. =defclass= 매크로의 경우 더 유연하긴 하지만, 간단한
+데이터 구조에서는 =defstruct= 가 더 간결하다. =defstruct= 는 슬롯
+이름에 타입 이름을 붙이는 식으로 함수를 자동으로 만들어주낟.
+
+#+BEGIN_SRC lisp
+
+  (defstruct struct1 s1 s2)
+
+  (make-struct1 :s1 1 :s2 2)
+
+  ;; 아래를 실행하면 1이 나온다.
+  (struct1-s1 (make-struct1 :s1 1 :s2 2)
+
+#+END_SRC
+
+=struct1= 을 정의할 때 슬롯으로 =s1=, =s2= 를 정의했으며, 이 경우
+=make-struct1= 이라는 생성자 함수와 =struct1-s1= , =struct1-s2= 함수가
+자동으로 생성된다.
