@@ -175,3 +175,4 @@ CLOS보다 =defstruct= 를 서서 데이터 구조를 정의하는 것을 선호
 =struct1= 을 정의할 때 슬롯으로 =s1=, =s2= 를 정의했으며, 이 경우
 =make-struct1= 이라는 생성자 함수와 =struct1-s1= , =struct1-s2= 함수가
 자동으로 생성된다.
+
