@@ -1,0 +1,102 @@
+* CLOS
+
+CLOS는 최초의 객체지향 프로그래밍 ANSI 표준이다. Java나 Smalltalk에
+비해 그 빈도는 작을지라도 최소한 몇가지 정의 CLOS 클래스를 Common
+Lisp에서 쓰게 될 것이다.
+
+** CLOS 클래스 예제
+
+아래는 =HTMLstream= 이라는 클래스를 사용하는 예제이다.
+
+#+BEGIN_SRC lisp
+
+  (defun test (&aux x)
+    (setq x (make-instance 'HTMLstream))
+    (set-header x "test page")
+    (add-element x "test text - this could be any element")
+    (add-table
+     x
+     '(("<b>Key phrase</b>" "<b>Ranking value</b>")
+       ("this is a test" 3.3)))
+    (get-html-string x))
+
+#+END_SRC
+
+제너릭 함수 =make-instance= 는 다음과 같은 인자를 받는다.
+
+#+BEGIN_SRC
+
+  make-instance class-name &rest initial-arguments &key ...
+  
+#+END_SRC
+
+위의 예제 코드에서는 4개의 제너릭 함수를 이용했다.
+
+- =set-header= - 페이지 제목을 정의하는 함수로 초기화할 때 필요
+- =add-element= - 문자열을 넣어 HTML 요소를 구성
+- =add-table= - 리스트의 리스트를 받아서 HTML 테이블을 만듬
+- =get-html-string= - 스트림을 닫고, 생성된 HTML 데이터를 문자열로 반환
+
+제너릭 함수 호출예제에서 보여지듯, 해당 함수의 첫번째 인수는 클래스의
+인스탄스라는 점이다. 그리고 첫번째 인수로 해당 클래스의 인스탄스를
+받지 않는다면 같은 이름의 다른 역할을 하는 함수를 만들어도 무방하다.
+
+=defmethod= 매크로를 통해서 동일한 함수 이름을 가졌지만, 인수나 인수
+갯수가 다른 함수를 만들 수 있다.
+
+** HTMLstream 클래스 구현하기
+
+=HTMLstream= 클래스는 아주 작지만, CLOS 프로그래밍에 대한 소개로
+합당할 것이다. 일단 =defclass= 매크로로 클래스를 만든느 것으로 시작하자.
+
+#+BEGIN_SRC
+
+  defclass class-name list-of-super-classes
+                      list-of-slot-specifications
+                      class-specifications
+  
+#+END_SRC
+
+이를 이용한 =HTMLstream= 클래스는 매우 간단한다.
+
+#+BEGIN_SRC lisp
+
+  (defclass HTMLstream ()
+    ((out :accessor out))
+    (:documentation "Provide HTML generation services"))
+
+#+END_SRC
+
+여기에서 볼 수 있듯이 클래스명은 =HTMLstream= 이며, 상위 클래스는 빈
+리스트 =()= 이다. 슬롯 명세에는 =out= 이라고 명명된 슬롯이 있고,
+클래스 명세에는 문서 문자열이 하나 있다. 슬롯은 Java 나 Smalltalk 에서
+이야기하는 인스탄스 변수와 유사하다. 대부분의 CLOS 클래스는 최소한
+하나의 상위 클래스를 상속하지만, 상속에 대한 예는 뒤에 다룬다.
+
+슬롯(혹은 인스탄스 변수)가 하나 있고, 해당 접근 변수를 도일한 이름으로
+정의했다. 읽기/쓰기용 변수를 슬롯과 동일한 이름으로 쓰는 것은 개인적인
+선호이다.
+
+=set-header= 함수는 이 클래스의 인스탄스 내부적으로 사용되는 문자열
+출력 스트림을 초기화한다. 이 메서드는 =with-accessors= 라는 편의
+매크로를 써서 지역변수를 다른 슬롯 접근자에 엮는다.
+
+#+BEGIN_SRC lisp
+
+  (defmethod set-header ((ho HTMLstream) title)
+    (with-accessors
+          ((out out))
+        ho
+      (setf out (make-string-output-stream))
+      (princ "<HTML><head><title>" out)
+      (princ title out)
+      (princ "</title></head><BODY>" out)
+      (terpri out)))
+  
+#+END_SRC
+
+위 예제에서 =defmethod= 인 인수는 =ho= 와 =title= 로, 이 중 =ho= 에는
+클래스 =HTMLstream= 의 인스탄스, 또는 그 하위 클래스라는 제약이
+붙는다.
+
+

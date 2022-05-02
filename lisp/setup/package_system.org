@@ -33,3 +33,45 @@
 
 ** Quicklisp 프로젝트로 패키징하기
 
+패키지를 구성하는데에는 두 개의 파일이 필요하다. 하나는 =package.lisp= 이며, 다른 하나는 =.asd= 파일이다.
+
+*** package.lisp
+
+=package.lisp= 은 해당 패키지에서 필요한 다른 패키지를 정의하거나, 공개적으로 외부에 노출될 함수의 목록을 정의한다.
+
+#+BEGIN_SRC lisp
+
+  (defpackage #:plotlib
+    (:use #:cl #:vecto)
+    (:export save-png plot-fill-rect plot-frame-rect
+             plot-size-rect plot-line plot-string plot-string-bold
+             pen-width))
+
+#+END_SRC
+
+위에 정의한 함수를 실행해보려면 패키지를 로그하고, 노출된 함수를 패키지 이름 =plotlib:= 을 붙여 호출하면 된다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickiload "plotlib")
+  (plotlib::test-plotlib "test-plotlib.png")
+  
+#+END_SRC
+
+** asd 파일
+
+=package.lisp= 파일과 별도로 확장자 =.asd= 를 가진 파일이 있다.
+
+#+BEGIN_SRC lisp
+
+  (asdf:defsystem #:plotlib
+    :description "Describe plotlib here"
+    :author "mark.watson@gmail.com"
+    :license "Apache 2"
+    :depends-on (#:vecto)
+    :components ((:file "package")
+                 (:file "plotlib")))
+  
+#+END_SRC
+
+이 파일에서 의존성을 추가하면 Quicklisp 이 적절하게 해당 패키지를 추가해줄 것이다.
