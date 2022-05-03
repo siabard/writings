@@ -1,0 +1,78 @@
+* Network Programming
+
+** Drakma HTTP Client
+
+Drakma 라이브러리는 HTTP를 통한 데이터 가져오기를 지원한다. 인증된
+HTTP 요청, GET과 PUT 작업, 쿠키 등을 다룰 수 있다. 여기에서는 다수의
+값을 반환하는 =drakma:http-request= 를 이용할 것이다. 아래 예제에서
+=multiple-value-setq= 매크로를 사용하는 모습을 확인할 수 있다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload :drakma)
+  (multiple-value-setq
+      (data http-response-code headers)
+      (drakma:http-request "http://markwatson.com"))
+
+#+END_SRC
+
+해당하는 요청에 대한 결과는 =data= , =http-response= , =code= 에 각기
+저장된다.
+
+** Hunchentoot
+
+Hunchentoot 는 웹서비스와 웹어플리케이션을 만드는데 사용하는 유연한 라이브러리이다.
+CL-WHO 라이브러리를 같이 이용해서 Lisp 코드로 HTML을 생성할 수 있다. Hunchentoot는
+아래와 같이 설치할 수 있다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload "hunchentoot")
+  
+#+END_SRC
+
+Hunchentoot 에서 easy handler 프레임워크를 이용하면 다음과 같은 코드를 만들 수 있다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload :hunchentoot)
+  (ql:quickload :cl-who)
+
+  (in-package :cl-user)
+  (defpackage hdemo
+    (:use :cl
+          :cl-who
+          :hunchentoot))
+
+  (in-package :hdemo)
+
+  (defvar *h* (make-instance 'easy-acceptor :port 3000))
+
+  ;; my-greetings : 임의의 이름이다.
+  ;; :uri : URL 패턴으로 easy acceptor 가 처리할 경로이다.
+  ;; name 은 여기에서 파라미터이다. query string으로 처리된다. (?name=...)
+  (define-easy-handler (my-greetings :uri "/hello") (name)
+    (setf (hunchentoot:content-type*) "text/html")
+    (with-html-output-to-string (*standard-output* nil :prologue t)
+      (:html
+       (:head (:title "hunchentoot test"))
+       (:body
+        (:h1 "hunchentoot form demo")
+        (:form :method :post
+               (:input :type :text :name "name" :value name)
+               (:input :type :submit :value "Submit your name"))
+        (:p "Hello " (str name))))))
+
+  (hunchentoot:start *h*)
+
+#+END_SRC
+
+** REST Client Server 만들기
+
+JSON 데이터로 데이터를 주고 받기위해서는 =cl-json= 패키지를 사용한다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload :cl-json)
+
+#+END_SRC
