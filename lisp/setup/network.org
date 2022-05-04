@@ -57,7 +57,6 @@ Hunchentoot 에서 easy handler 프레임워크를 이용하면 다음과 같은
       (:html
        (:head (:title "hunchentoot test"))
        (:body
-        (:h1 "hunchentoot form demo")
         (:form :method :post
                (:input :type :text :name "name" :value name)
                (:input :type :submit :value "Submit your name"))
@@ -74,5 +73,79 @@ JSON 데이터로 데이터를 주고 받기위해서는 =cl-json= 패키지를 
 #+BEGIN_SRC lisp
 
   (ql:quickload :cl-json)
+
+  (defvar y (list (list '(cat . "the cat ran") '(dog . 101)) 1 2 3 4 5))
+
+  ;; [{"cat": "the cat run", "dog": 101}, 1, 2, 3, 4, 5]
+  (json:encod-json-to-string y)
+
+#+END_SRC
+
+위의 예를 통해 간단히 웹서버를 만들어보낟.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload :hunchentoot)
+  (ql:quickload :cl-json)
+
+  (defvar *h* (make-instance 'hunchentoot:easy-acceptor :port 3000))
+
+  ;; handler
+  (hunchentoot:define-easy-handler (animal :uri "/animal") (name)
+    (print name)
+    (setf (hunchentoot:content-type*) "text/plain")
+    (cond
+      ((string-equal name "cat")
+       (json:encode-json-to-string
+	(list
+	 (list
+	  '(average_weight . 10)
+	  '(friendly . nil))
+	 "A cat can live indoors or outdoors.")))
+      ((string-equal name "dog")
+       (json:encode-json-to-string
+	(list
+	 (list
+	  '(average_weight . 40)
+	  '(friendly . t))
+	 "A dog is a loyal creature, much valued by humans.")))
+      (t
+       (json:encode-json-to-string
+	(list
+	 ()
+	 "unknown type of animal")))))
+
+  (hunchentoot:start *h*)
+
+#+END_SRC
+
+위 결과는 일반 text 문자열이기 때문에, 해당하는 결과를 다시 JSON 데이터로 전환해야한다.
+
+#+BEGIN_SRC lisp
+
+  (ql:quickload :drakma)
+  (ql:quickload :cl-json)
+
+  ;; (((:AVERAGE-WEIGHT . 40) (:FRIENDLY . T)) "A dog is a loyal creature, much valued by humans.")
+  (cl-json:decode-json-from-string
+   (drakma:http-request "http://127.0.0.1:3000/animal?name=dog"))
+
+#+END_SRC
+
+많은 경우 REST 웹서비스는 읽기 전용인 경우이지만, 값을 등록하는 경우도 있다.
+
+#+BEGIN_SRC lisp
+
+  (defparameter *animal-hash* (make-hash-table))
+
+  ;; handler HTTP POST requests:
+  (hunchentoot:define-easy-handler (some-handler :uri "/add") (json-data)
+    (setf (hunchentoot:content-type*) "text/plain")
+    (let* ((data-string (hunchentoot:raw-post-data :force-text t))
+	   (data (cl-json:decode-json-from-string json-dada))
+	   ;; name of animal is a hashed value:
+	   (animal-name (gethash "name" data)))
+      (setf (gethash animal-name *animal-hash*) data))
+    "OK")
 
 #+END_SRC
