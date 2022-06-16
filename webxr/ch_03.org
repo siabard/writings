@@ -1,0 +1,358 @@
+* 기본틀 만들기
+
+
+#+BEGIN_SRC javascript
+    /*==== Create a WebGL Context ====*/
+
+    /*==== Define and Store the Geometry ====*/
+
+    /*==== Define front-face vertices ====*/
+
+    /*==== Define front-face buffer ====*/
+
+    /*==== Shaders ====*/
+
+    /*==== Define shader source ====*/
+
+    /*==== Create shaders ====*/
+
+    /*==== Compile shaders ====*/
+
+    /*==== Create shader program ====*/
+
+    /*==== Link shader program ====*/
+
+    /*==== Connect the attribute with the vertex shader ====*/
+
+    /*==== Drawing ====*/
+
+    /*==== Draw the points to the screen ====*/
+#+END_SRC
+
+** WebGL Context 생성
+
+WebGL Context는 아래와 같이 만든다.
+
+#+BEGIN_SRC javascript
+
+    const canvas = document.querySelector("#c");
+    const gl = canvas.getContext('webgl');
+
+    if(!gl) {
+        console.log('WebGL unavailable');
+    } else {
+        console.log('WebGL is good to go');
+    }
+
+#+END_SRC
+
+** Geometry 설정하기
+
+사각형 하나를 표현하기위해서는 x, y, z 좌표 6 세트가 필요하다. 이는
+사각형 하나를 표현하는데에는 두 개의 삼각형이 필요하기 때문이다.
+
+*** Front face vertex 설정하기
+
+#+BEGIN_SRC javascript
+
+  /*==== Define front-face vertices ====*/
+  const firstSquare = [
+      // front face
+      -0.3 , -0.3 , -0.3 ,
+       0.3 , -0.3 , -0.3 ,
+       0.3 ,  0.3 , -0.3 ,
+
+      -0.3 , -0.3 , -0.3 ,
+      -0.3 ,  0.3 , -0.3 ,
+       0.3 ,  0.3 , -0.3 ,
+  ];
+
+#+END_SRC
+
+*** Front face buffer 설정하기
+
+
+#+BEGIN_SRC javascript
+  /*==== Define front-face buffer ====*/
+  
+  // buffer
+  const origBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, origBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(firstSquare), gl.STATIC_DRAW);
+
+
+#+END_SRC
+
+** Shader
+
+*** Shader 소스 만들기
+
+javascript 파일 내에서 shader 코드를 넣으려면 이를 문자열로
+보관한다. 편집의 편의성을 위해 백틱( =`= )을 사용한다.
+
+#+BEGIN_SRC javascript
+
+  /*==== Define shader source ====*/
+
+  const vsSource = `
+      attribute vec4 aPosition;
+
+      void main() {
+	  gl_Position = aPosition;
+      }
+  `;
+
+  const fsSource = `
+      void main() {
+	  gl_FragColor = vec4(1, 0, 0, 1);
+      }
+  `;
+
+
+#+END_SRC
+
+*** Shader 만들기
+
+위의 소스코드를 OpenGL의 Shader로 생성한다.
+
+#+BEGIN_SRC javascript
+  
+  /*==== Create shaders ====*/
+
+  const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+  const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(vertexShader, vsSource);
+  gl.shaderSource(fragmentShader, fsSource);
+
+#+END_SRC
+
+*** Shader 컴파일
+
+생성된 Shader를 컴파일한다.
+
+#+BEGIN_SRC javascript
+
+  /*==== Compile shaders ====*/
+
+  gl.compileShader(vertexShader);
+  gl.compileShader(fragmentShader);
+  
+#+END_SRC
+
+*** OpenGL 프로그램 생성
+
+이제 Shader를 적용할 shadrer program을 만든다.
+
+#+BEGIN_SRC javascript
+
+  /*==== Create shader program ====*/
+  
+  const program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+
+#+END_SRC
+
+*** Shader 프로그램을 opengl에 연결
+
+생성된 Shader Program을 OpenGL 에 연결한다.
+
+#+BEGIN_SRC javascript
+
+  /*==== Link shader program ====*/
+
+  gl.linkProgram(program);
+  gl.useProgram(program);  
+
+#+END_SRC
+
+*** Shader 프로그램에 파라미터 설정
+
+이제 Shader 프로그램에 속성값을 설정한다.
+
+#+BEGIN_SRC javascript
+  
+  /*==== Connect the attribute with the vertex shader ====*/
+
+  const posAttribLocation = gl.getAttribLocation(program, "aPosition");
+  gl.bindBuffer(gl.ARRAY_BUFFER, origBuffer);
+  gl.vertexAttribPointer(posAttribLocation, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(posAttribLocation);
+
+#+END_SRC
+
+*** 이제 화면에 그리는 작업을 진행한다.
+
+#+BEGIN_SRC javascript
+  
+  /*======== Drawing ========*/
+
+  gl.clearColor(1, 1, 1, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  /*==== Draw the points to the screen ====*/
+
+  const mode = gl.TRIANGLES;
+  const first = 0;
+  const count = 6;
+
+  gl.drawArrays(mode, first, count);
+
+#+END_SRC
+
+
+* 객체를 추가하기
+
+** 점의 좌표를 추가
+
+#+BEGIN_SRC javascript
+  
+  const squares = [
+      // front face
+      -0.3 , -0.3 , -0.3 ,
+       0.3 , -0.3 , -0.3 ,
+       0.3 ,  0.3 , -0.3 ,
+
+      -0.3 , -0.3 , -0.3 ,
+      -0.3 ,  0.3 , -0.3 ,
+       0.3 ,  0.3 , -0.3 ,
+
+       //back face
+      -0.2 , -0.2 ,  0.3 ,
+       0.4 , -0.2 ,  0.3 ,
+       0.4 ,  0.4 ,  0.3 ,
+
+      -0.2 , -0.2 ,  0.3 ,
+      -0.2 ,  0.4 ,  0.3 ,
+       0.4 ,  0.4 ,  0.3 ,
+  ];
+
+#+END_SRC
+
+** 색상의 추가
+
+fragment shader에 값을 추가해야한다. 일단 Shader Source 데이터를 수정한다.
+
+지정색이던 값을 빼고, vertex shader에 색상값을 전달받도록 속성을 추가하고, 이를 fragment shader로 전달한다.
+
+#+BEGIN_SRC javascript
+
+  const vsSource = `
+      attribute vec4 aPosition;
+      attribute vec4 aVertexColor;
+
+      varying lowp vec4 vColor;
+
+      void main() {
+	  gl_Position = aPosition;
+	  vColor = aVertexColor;
+      }
+  `;
+
+  const fsSource = `
+      varying lowp vec4 vColor;
+
+      void main() {
+	  gl_FragColor = vColor;
+      }
+  `;
+  
+#+END_SRC
+
+vertex shader에 =aVertexColor= 라는 파라미터를 차가하며, =lowp vec4=
+타입의 =vColor= 라는 varying qualifier를 추가한다. =vec4= 는 4개의
+값을 가진 벡터로 여기에서는 r,g,b,a 값으로 쓰이며, =lowp= 는
+컴파일러에 이 값이 low precision float 값이라고 알려준다.
+
+vertex shader에 새로운 속성을 추가했으므로, 이제 이 값을 buffer로 전달해야한다.
+
+shader 생성하기 전에 아래의 코드를 넣는다.
+
+#+BEGIN_SRC javascript
+
+  const colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareColors), gl.STATIC_DRAW);
+  
+#+END_SRC
+
+각 점의 정보를 버퍼에 넣었던 것처럼, 색상의 값도 똑같이
+넣는다. =squareColors= 의 값은 아래와 같다.
+
+#+BEGIN_SRC javascript
+
+  const squareColors = [
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+  ];
+
+#+END_SRC
+
+4개의 값으로 이루어진 총 12개의 값에 대해 색상을 지정해준다.
+
+** vertex shader 속성 연결
+
+버퍼에 값을 넣었으므로, vertex shader 에 필요한 속성을 연결해준다. 
+
+#+BEGIN_SRC javascript
+
+  const colorAttribLocation = gl.getAttribLocation(program, "aVertexColor");
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.vertexAttribPointer(colorAttribLocation, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(colorAttribLocation);
+  
+#+END_SRC
+
+=gl.vertexAttribPointer= 메서드 호출시 전달되는 파라미터에
+주의하자. =aPosition= 속성에 대한 값의 경우 3을 전달했다. 해당 인수는
+GPU에 각각의 Vertex는 3개의 값을 가진다고 알려주는 것이다. 반대로 색상
+지정을 위해서는 기본 지점당 4개의 값이 필요하므로, =aVertexColor= 에
+대해서는 4를 전달해야한다.
+
+** 오류처리 : compile shader
+
+값이 추가된다는 점은 오류가 발생할 확률이 그만큼 늘어난다는 것을
+의미한다. shader의 compile 결과에 대해 오류를 점검하도록 변경한다.
+
+#+BEGIN_SRC javascript
+
+  gl.compileShader(vertexShader);
+  if(!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+      alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(vertexShader));
+      gl.deleteShader(vertexShader);
+      return null;
+  }
+
+  gl.compileShader(fragmentShader);
+  if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+      alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(fragmentShader));
+      gl.deleteShader(vertexShader);
+      return null;
+  }
+
+#+END_SRC
+
+** Draw 호출
+
+모든 작업을 완료했다면, 다음과 같이 draw 루틴을 변경한다.
+
+#+BEGIN_SRC javascript
+  
+  gl.clearColor(1, 1, 1, 1);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+#+END_SRC
+

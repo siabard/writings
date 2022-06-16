@@ -1,0 +1,9 @@
+* Example
+
+** Bing API를 써보기
+
+Bing API가 합쳐진 관계로 Congnitive Search로 API를 만들었다.
+생성 중에 Price Tier를 꼭 선택해서 Free로 설정하는 것을 잊지않도록 한다.
+
+해당 API에 보면 query keys가 있는데, 아마 이 값이 API key라고 생각된다. (admin key를 쓰지말것)
+
