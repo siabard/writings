@@ -1,0 +1,62 @@
+* 기초 모듈 만들기
+
+게임이 일반적으로 다른 프로그램과 다른 점은 프로그램 실행내내 초당
+여러 번 게임이 계속해서 변화한다는 점이다. *게임 루프* 라고 하는 이
+반복 구조는 전체 게임프로그램에 걸쳐 운영된다.
+
+다른 여타 반복문과 마찬가지로 게임 루프도 매 반복 주기마다 코드를
+실행하며, 반복이 실행되는 여부를 결정하는 조건역시 포함한다.
+
+각각의 반복주기를 *프레임(frame)* 이라고 한다. 게임이 60 FPS (frames
+per second) 로 동작한다는 것은 매 초에 60번의 반복 주기를 수행한다는
+의미이다. *프레임 주기(frame rate)* 는 FPS라고 불리기도한다.
+
+** 한 프레임에 대한 해부
+
+크게 보면, 게임 내에서는 매 프레임마다 다음 작업이 이루어진다.
+
+1. 입력을 처리한다.
+2. 게임 월드를 업데이트한다.
+3. 출력을 생성한다.
+
+
+** 뼈대 만들기
+
+이제 기본이 되는 =Game= 클래스를 구성할 것이다. 이를 위해서는
+=ocamlsdl2= 라이브러리가 필요하여 해당 라이브러리도 설치해야한다.
+
+해당 클래스에는 윈도에 대한 포인터와 게임 루프를 지속해야하는지에 대한
+불린 변수가 들어있다.
+
+#+BEGIN_SRC ocaml
+
+open Sdl
+
+class game =
+  object (s)
+    val mutable window = None
+    val mutable is_running = false
+    method init width height = let _ = Sdl.init[`VIDEO] in
+                  let m_window = Sdlwindow.create2
+                                   ~x:`undefined ~y:`undefined
+                                   ~width ~height
+                                   ~title:"SDL2 tutorial"
+                                   ~flags:[Window.Resizable] in
+                  window <- Some(m_window);
+                  is_running <- true
+    method shutdown () = let _ = match window with
+                        | Some(w) -> Sdlwindow.destroy w                                  
+                        | None -> ()
+              in
+              Sdl.quit ()
+
+    method gameloop = let rec loop () =
+                        if is_running == true then loop () else s#shutdown ()
+                      in 
+                      loop ()
+            
+    end
+    
+
+#+END_SRC
+

@@ -1,0 +1,132 @@
+* OCaml 프로젝트를 Dune으로 구성하기
+
+프로젝트를 만들 때 가장 손쉽게 만들 수 있는 방법이 =dune= 을 이용하는 것이다.
+
+#+BEGIN_SRC bash
+
+  dune init proj [프로젝트 명]
+
+#+END_SRC
+
+위와 같이 생성하면 아래와 같은 구조의 디렉토리가 형성된다.
+
+#+BEGIN_SRC bash
+  tree -d
+  ├── bin
+  ├── lib
+  └── test
+  
+#+END_SRC
+
+위와 같은 구조로 형성되었다면 아래의 명령어로 빌드하거나 실행할 수 있다.
+
+#+BEGIN_SRC bash
+
+  # build
+  dune build bin/main.exe
+
+  # execution
+  dune exec bin/main.exe
+  
+#+END_SRC
+
+확장자는 별로 신경쓸 필요는 없다. DOS를 기억한다면 =.exe= 가 뭔가
+의미가 있을 것같이 느껴지겠지만, 단순히 실행파일임을 표시해줄 뿐이다.
+
+* SDL2 를 프로젝트 의존성에 넣기
+
+프로젝트 의존성을 설정하기 위해서는 각 디렉토리에 있는 =dune= 파일을 수정해야한다. 일단 =bin/dune= 의 내용부터 살펴보자.
+
+#+BEGIN_SRC
+(executable
+ (public_name game_3d)
+ (name main)
+ (link_flags -cclib -lSDL2)
+ (libraries sdl2 game_3d))
+#+END_SRC
+
+=game_3d= 라고 되어있는 부분은 위에서 프로젝트를 구성할 때 프로젝트
+명을 =game_3d=라고 설정해주면 자동으로 설정되는 부분이다. 각 부분을 하나하나 살펴보자.
+
+- =executable= 부분은 해당 =dune= 파일은 실행파일을 만들기 위한 버전임을 알려준다.
+- =public_name= 부분은 빌드 결과 만들어질 패키지의 이름이다.
+- =name= 부분은 해당 빌드 결과 얻어질 모듈의 이름이다.
+- =link_flags= 는 바이너리 파일을 생성할 때 링커에 넘겨줄 파라미터를 정의한다.
+- =libraries= 는 이 모듈을 만들때 필요한 외부 의존성을 정의한다.
+
+=libraries= 에는 두 개의 의존성이 걸려있는데 외부 모듈은 =sdl2= 와 내부 라이브러리인 =game_3d= 이다.
+
+** 내부 라이브러리
+
+=lib/=  디렉토리를 살펴볼 차례이다. 해당 디렉토리에 있는 =dune= 파일을 설펴보자.
+
+#+BEGIN_SRC
+
+(library
+ (name game_3d)
+ (libraries sdl2))
+ 
+#+END_SRC
+
+이전에 =bin/= 디렉토리에 있던 =dune= 파일과 비슷한 구조이지만 한가지가 다르다.
+
+- =library= 부분이 핵심이다. 여기에서의 선언은 이 패키지가
+  라이브러리이며, =name= 에서 정의된 이름으로 사용될 것임을 정의한다.
+
+여기서 잠깐 실제로 =bin/main.ml= 에서 어떻게 이 라이브러리가 이용되었는지를 살펴보자.
+
+#+BEGIN_SRC ocaml
+
+  open Game_3d
+      
+  let () = let g = new Game.game in
+	   let _ = (g#init 1024 768) in
+	   g#gameloop 
+
+#+END_SRC
+
+위에서 모듈이 어떻게 쓰이는지 알 수 있겠는가? =bin/dune= 에서
+=libraries= 에서 정의된 모듈은 =open Game_3d= 를 통해 이용이
+가능하다. 주의할 점은 첫글자가 대문자가 된다는 점이다. =open= 을 통해
+가져온 의존성 내의 모듈은 바로 이용이 가능하다. 여기에서 보이는 =Game=
+이 바로 그것이다.
+
+그렇다면 =Game.game= 은 어떻게 정의되는지 =lib/game.ml= 파일을 확인해보자.
+
+#+BEGIN_SRC ocaml
+
+open Sdl
+
+class game =
+  object (s)
+    val mutable window = None
+    val mutable is_running = false
+    method init width height = let _ = Sdl.init[`VIDEO] in
+                  let m_window = Sdlwindow.create2
+                                   ~x:`undefined ~y:`undefined
+                                   ~width ~height
+                                   ~title:"SDL2 tutorial"
+                                   ~flags:[Window.Resizable] in
+                  window <- Some(m_window);
+                  is_running <- true
+    method shutdown () = let _ = match window with
+                        | Some(w) -> Sdlwindow.destroy w                                  
+                        | None -> ()
+              in
+              Sdl.quit ();
+              ()
+
+    method gameloop = let rec loop () =
+                        if is_running == true then loop () else s#shutdown ()
+                      in 
+                      loop ()
+            
+    end  
+
+#+END_SRC
+
+
+여기에서 =game.ml= 은 라이브러리 =game_3d= 에 의해 =Game_3d.Game= 으로
+접근이 된다. 그리고 해당 파일 안에 있는 =game= 클래스를 =Game.game=
+으로 접근해서 쓸 수 있다.
+
