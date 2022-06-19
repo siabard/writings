@@ -1,0 +1,69 @@
+* Event Polling
+
+SDL2에서는 운영체제에서 전달해주는 이벤트를 내부적으로 큐(Queue)로
+관리한다.  매 프레임마다 게임은 발생한 이벤트 중 필요한 이벤트를
+선정하여 이를 처리하고 나머지는 무시한다.
+
+** 이벤트 처리
+
+이는 =gameloop= 에서 이벤트를 처리하도록 하여 처리한다. 이벤트 큐에는
+다양한 이벤트가 한번에 들어오기 때문에 매 프레임별로 모든 목록을
+처리해야한다.
+
+아래 코드에서 보이듯이 한 번의 반복에서 이벤트를 처리하는 메서드를
+호출한다.
+
+#+BEGIN_SRC ocaml
+
+  class game =
+    object (s)
+      (** 중간 생략 *)
+
+      method gameloop = let rec loop () =
+			  if is_running == true then begin
+			    s#process_event  () ; (** 이벤트 처리를 여기에서 한다. *)
+			    loop ()
+			  end
+			  else s#shutdown ()
+			in
+			loop ()
+
+      (** 이후 생략 *)
+      end
+
+#+END_SRC
+
+** 이벤트 폴링(polling)
+
+매 프레임에서 호출되는 메서드 =process_event= 에서는
+=Event.poll_event= 가 =None= 을 반환하는 동안 발생하는 모든 이벤트를
+처리해야한다.
+
+원래 C버전에서는 =SDL_PollEvent(&event)= 의 결과가 false이면 더이상
+이벤트가 없는 것이지만, OCaml에서는 =option= 형으로 처리하여 =Some t=
+이나 =None= 에 대해 처리한다.
+
+#+BEGIN_SRC ocaml
+
+  open Sdlevent
+
+  class game =
+    object (s)
+      (** 중간 생략 *)
+      method process_event () = let rec aux_process () =
+				  let event = Event.poll_event () in
+				  match event with
+				 | Some Quit _ -> is_running <- false
+                                 | None -> ()
+				 | _ -> aux_process ()
+	in
+	aux_process ()
+
+      (** 이후 생략 *)
+      end
+
+#+END_SRC
+
+=process_event= 에서는 =None= 인 경우 =unit= 을 반환하고 종료하고,
+=Quit= 이벤트인 경우 =is_running= 을 =false= 로 하여 프로그램 종료할
+준비를 한다. 그 외의 경우에는 재귀호출을해서 반복문을 구성한다.
