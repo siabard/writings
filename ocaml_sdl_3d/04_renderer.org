@@ -1,0 +1,80 @@
+* Renderer와 키를 통한 종료
+
+** 키 이벤트
+
+먼저 ESC키를 누르면 종료되도록 이벤트 코드를 살짝 고쳐보자.
+
+#+BEGIN_SRC ocaml
+  class game =
+    object (s)
+      (** 중간 생략 *)
+      method process_event () = let rec aux_process () =
+				  let event = Event.poll_event () in
+				  match event with
+				 | Some Quit _ -> is_running <- false
+                                 | Some KeyDown ev -> if ev.scancode == Sdlscancode.ESCAPE then begin
+                                                         is_running <- false;
+                                                         ()
+                                                       end
+                                                     else ()
+				 | None -> ()
+				 | _ -> aux_process ()
+	in
+	aux_process ()
+
+      (** 이후 생략 *)
+      end
+
+#+END_SRC
+
+=KeyDown= 이벤트인 경우 해당 이벤트 =ev= 를 받아 =scancode= 를 비교하여 해당 값이 ESC이면 종료하도록 한다.
+
+** Renderer
+
+렌더러를 생성해야 실제로 화면에 출력할 수 있다. 렌더러는 더블버퍼링같은 작업을 눈에 보이지 않는 면에서 진행해주기 때문에 매우 유용하다.
+렌더러는 =Window= 객체를 통해 만들어진다.
+
+#+BEGIN_SRC ocaml
+  class game =
+    object (s)
+      val mutable window = None
+      val mutable renderer = None
+      val mutable is_running = false
+      
+      method init width height = let _ = Sdl.init[`VIDEO] in
+		  let m_window = Sdlwindow.create2
+				   ~x:`undefined ~y:`undefined
+				   ~width ~height
+				   ~title:"SDL2 tutorial"
+				   ~flags:[Window.Resizable] in
+		  window <- Some(m_window);
+		  let m_renderer = Sdlrender.create_renderer ~win:m_window ~index:(-1) ~flags:[Render.Accelerated; Render.PresentVSync] in
+		  renderer <- Some(m_renderer);
+		  is_running <- true
+      (** 이후 생략 *)
+      end
+#+END_SRC
+
+이제 생성한 renderer 로 화면에 그리도록 게임루프를 수정한다.
+
+#+BEGIN_SRC ocaml
+    method gameloop = let rec loop () =
+                        if is_running == true then begin
+                            s#process_event  () ;
+                            let _ = match renderer with
+                            | Some(r) -> Sdlrender.set_draw_color3 r ~r:0 ~g:0 ~b:255 ~a:255 ;
+                                         Sdlrender.clear r;
+                                         Sdlrender.render_present r;
+                                         ()
+                            | None -> ()
+                            in
+                          loop ()
+                        end
+                        else s#shutdown ()
+                      in
+                      loop ()
+#+END_SRC
+
+여기에서 보이듯이 =renderer= 를 이용해 화면에 칠할 색을 정하고 =clear=
+로 화면을 깨끗히 청소한 다음 =render_resent= 로 버퍼를 실제 보이는 곳에
+전송하면 화면 출력이 완료된다.
